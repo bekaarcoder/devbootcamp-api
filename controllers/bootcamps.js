@@ -45,13 +45,35 @@ exports.viewBootcamp = async (req, res, next) => {
 // @desc ---> Update a bootcamp
 // @route ---> PUT /api/v1/bootcamps/:id
 // @access ---> Private
-exports.updateBootcamp = (req, res, next) => {
-  res.status(200).json({ status: true });
+exports.updateBootcamp = async (req, res, next) => {
+  const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  if (!bootcamp) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No bootcamp found." });
+  }
+
+  res.status(200).json({ success: true, data: bootcamp });
 };
 
 // @desc ---> Delete a bootcamp
 // @route ---> DELETE /api/v1/bootcamps/:id
 // @access ---> Private
-exports.deleteBootcamp = (req, res, next) => {
-  res.status(200).json({ status: true });
+exports.deleteBootcamp = async (req, res, next) => {
+  const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+  if (!bootcamp) {
+    return res.status(400).json({
+      success: false,
+      message: "No bootcamp found."
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Bootcamp deleted"
+  });
 };
