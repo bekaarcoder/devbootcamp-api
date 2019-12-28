@@ -6,7 +6,14 @@ const {
   viewBootcamp,
   deleteBootcamp
 } = require("../controllers/bootcamps");
+
+// Include other resource router
+const courseRouter = require("./courses");
+
 const router = express.Router();
+
+// Re-route into other resource router
+router.use("/:bootcampId/courses", courseRouter);
 
 router
   .route("/")
