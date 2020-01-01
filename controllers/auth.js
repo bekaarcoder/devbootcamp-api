@@ -23,3 +23,39 @@ exports.register = asyncHandler(async (req, res, next) => {
     token
   });
 });
+
+// @desc ---> Login User
+// @route ---> PoST /api/v1/auth/login
+// @access ---> Public
+exports.login = asyncHandler(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // validate email & password
+  if (!email && !password) {
+    return next(
+      new ErrorResponse("Please provide a valid email and password", 400)
+    );
+  }
+
+  // check if user exists
+  const user = await User.findOne({ email: email }).select("+password");
+
+  if (!user) {
+    return next(new ErrorResponse("Invalid credentials", 401));
+  }
+
+  // check password
+  const isMatch = await user.matchPassword(password);
+
+  if (!isMatch) {
+    return next(new ErrorResponse("Invalid credentials", 401));
+  }
+
+  // create token
+  const token = user.getSignedJwtToken();
+
+  res.status(200).json({
+    success: true,
+    token
+  });
+});
