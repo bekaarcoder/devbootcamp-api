@@ -55,6 +55,7 @@ exports.getCourse = asyncHandler(async (req, res, next) => {
 // @route ---> POST /api/v1/bootcamps/:bootcampId/courses
 // @access ---> Private
 exports.addCourse = asyncHandler(async (req, res, next) => {
+  req.body.user = req.user.id;
   req.body.bootcamp = req.params.bootcampId;
 
   const bootcamp = await Bootcamp.findById(req.params.bootcampId);
@@ -88,6 +89,11 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
     );
   }
 
+  // check user is authorized
+  if (course.user.toString() !== req.user.id) {
+    return next(new ErrorResponse("Not Authorized", 401));
+  }
+
   const updatedCourse = await Course.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -107,7 +113,7 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
 // @route ---> DELETE /api/v1/courses/:id
 // @access ---> Private
 exports.deleteCourse = asyncHandler(async (req, res, next) => {
-  const course = await Course.findByIdAndRemove(req.params.id);
+  const course = await Course.findById(req.params.id);
 
   if (!course) {
     return next(
@@ -115,10 +121,15 @@ exports.deleteCourse = asyncHandler(async (req, res, next) => {
     );
   }
 
+  // check user is authorized
+  if (course.user.toString() !== req.user.id) {
+    return next(new ErrorResponse("Not Authorized", 401));
+  }
+
+  course.remove();
+
   res.status(200).json({
     success: true,
     message: "Course deleted."
   });
 });
-
-

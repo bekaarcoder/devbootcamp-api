@@ -104,16 +104,23 @@ exports.viewBootcamp = asyncHandler(async (req, res, next) => {
 // @route ---> PUT /api/v1/bootcamps/:id
 // @access ---> Private
 exports.updateBootcamp = asyncHandler(async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
+  let bootcamp = await Bootcamp.findById(req.params.id);
 
   if (!bootcamp) {
     return res
       .status(400)
       .json({ success: false, message: "No bootcamp found." });
   }
+
+  // check if user is authorized
+  if (bootcamp.user.toString() !== req.user.id) {
+    return next(new ErrorResponse("Not authorized", 401));
+  }
+
+  bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
 
   res.status(200).json({ success: true, data: bootcamp });
 });
@@ -128,6 +135,11 @@ exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
       success: false,
       message: "No bootcamp found."
     });
+  }
+
+  // check if user is authorized
+  if (bootcamp.user.toString() !== req.user.id) {
+    return next(new ErrorResponse("Not authorized", 401));
   }
 
   bootcamp.remove();
@@ -146,6 +158,11 @@ exports.uploadPhoto = asyncHandler(async (req, res, next) => {
 
   if (!bootcamp) {
     next(new ErrorResponse(`No bootcamp found by id ${req.params.id}`, 404));
+  }
+
+  // check if user is authorized
+  if (bootcamp.user.toString() !== req.user.id) {
+    return next(new ErrorResponse("Not authorized", 401));
   }
 
   if (!req.files) {
