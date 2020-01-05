@@ -146,6 +146,49 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc ---> PUT Update user details
+// @route ---> PUT /api/v1/auth/update
+// @access ---> Private
+exports.updateDetail = asyncHandler(async (req, res, next) => {
+  let user = await User.findById(req.user.id).select("+password");
+
+  if (!user) {
+    return next(new ErrorResponse("Not Authorized.", 401));
+  }
+
+  const fieldsToUpdate = {
+    name: req.body.name,
+    email: req.body.email
+  };
+
+  user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+    new: true,
+    runValidators: true
+  });
+
+  res.status(201).json({
+    success: true,
+    data: user
+  });
+});
+
+// @desc ---> PUT Update user password
+// @route ---> PUT /api/v1/auth/changepassword
+// @access ---> Private
+exports.changePassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  const isMatch = await user.matchPassword(req.body.currentPassword);
+  if (!isMatch) {
+    return next(new ErrorResponse("Current password does not match.", 401));
+  }
+
+  user.password = req.body.password;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+});
+
 // get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
